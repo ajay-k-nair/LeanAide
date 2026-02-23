@@ -8,9 +8,13 @@ open LeanAide
 
 set_option trace.leanaide.translate.debug true
 
-#generate TheoremWithCode from "There are infinitely many odd numbers" as testToken
+#generateToken TheoremWithCode from "There are infinitely many odd numbers" as testToken
 
 #lookup_naive testToken
+
+#generate TheoremWithCode from "There are infinitely many odd numbers" as test
+
+#lookup TheoremWithCode from test
 
 #eval LeanAidePipe.response <| json% {"task": "echo"}
 

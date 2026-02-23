@@ -59,6 +59,12 @@ class Kernel where
   /-- Query the LeanAide server with a natural language statement. -/
   mathQuery (s: String) (history : List ChatPair := []) (n: Nat := 3) : MetaM (List String)
 
+class ToCommandSeq (α : Type) where
+  commandSeq : α → TermElabM (TSyntax ``commandSeq)
+
+def toCommandSeq {α : Type} [inst: ToCommandSeq α] (a : α) : TermElabM (TSyntax ``commandSeq) :=
+  inst.commandSeq a
+
 structure TheoremStatementText where
   theoremText : String
 deriving Repr, ToJson, FromJson
@@ -67,6 +73,10 @@ structure TheoremWithCode extends TheoremStatementText where
   name : Name
   theoremCode : Expr
   statement : Syntax.Command
+
+instance : ToCommandSeq TheoremWithCode where
+  commandSeq x := do
+    `(commandSeq| $x.statement:command)
 
 structure TheoremWithCodeProxy extends TheoremStatementText where
   name : Name
@@ -88,11 +98,56 @@ instance : Proxy TheoremWithCode TheoremWithCodeProxy where
 structure TheoremProved extends TheoremWithCode where
   document : String
 
+structure TheoremProvedProxy extends TheoremWithCodeProxy where
+  document : String
+deriving Repr, ToJson, FromJson
+
+instance : Proxy TheoremProved TheoremProvedProxy where
+  to x := do
+    let base ← proxy (x.toTheoremWithCode)
+    return { base with document := x.document }
+  of x := do
+    let .ok theoremCodeStx := runParserCategory (← getEnv) `term x.theoremCode | throwError s!"Error while parsing {x.theoremCode}"
+    let .ok theoremStatementStx := runParserCategory (← getEnv) `command x.statement | throwError s!"Error while parsing {x.statement}"
+    let theoremCode ← elabType theoremCodeStx
+    return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩, document := x.document }
+
 structure TheoremStructuredProof extends TheoremProved where
   documentJson : Json
 
+structure TheoremStructuredProofProxy extends TheoremProvedProxy where
+  documentJson : Json
+deriving Repr, ToJson, FromJson
+
+instance : Proxy TheoremStructuredProof TheoremStructuredProofProxy where
+  to x := do
+    let base ← proxy (x.toTheoremProved)
+    return { base with documentJson := x.documentJson }
+  of x := do
+    let .ok theoremCodeStx := runParserCategory (← getEnv) `term x.theoremCode | throwError s!"Error while parsing {x.theoremCode}"
+    let .ok theoremStatementStx := runParserCategory (← getEnv) `command x.statement | throwError s!"Error while parsing {x.statement}"
+    let theoremCode ← elabType theoremCodeStx
+    return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩, document := x.document, documentJson := x.documentJson }
+
 structure TheoremProofCode extends TheoremStructuredProof where
   documentCode : TSyntax ``commandSeq
+
+structure TheoremProofCodeProxy extends TheoremStructuredProofProxy where
+  documentCode : String
+deriving Repr, ToJson, FromJson
+
+instance : Proxy TheoremProofCode TheoremProofCodeProxy where
+  to x := do
+    let base ← proxy (x.toTheoremStructuredProof)
+    let documentCode ← showCommandSeq x.documentCode
+    return { base with documentCode := documentCode }
+  of x := do
+    let .ok theoremCodeStx := runParserCategory (← getEnv) `term x.theoremCode | throwError s!"Error while parsing {x.theoremCode}"
+    let .ok theoremStatementStx := runParserCategory (← getEnv) `command x.statement | throwError s!"Error while parsing {x.statement}"
+    let theoremCode ← elabType theoremCodeStx
+    let .ok documentCodeStx := runParserCategory (← getEnv) `commandSeq x.documentCode | throwError s!"Error while parsing {x.documentCode}"
+    return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩, document := x.document, documentJson := x.documentJson, documentCode := ⟨documentCodeStx⟩ }
+
 
 /--
 Task acting on type `α` and returning type `β`, where `α` is the input type and `β` is the output type. This is used to capture the various tasks that LeanAide can perform, such as translating a theorem, generating documentation, and so on. The `TaskName` typeclass is used to associate a string name with each task, which is used when querying the LeanAide server.
@@ -722,9 +777,8 @@ def mkQueryM {α : Type}(x : α) (β : Type) [TaskList α β] [JsonForTask α][F
   let .ok token := json.getObjValAs? UInt64 "token" | throwError "response has no 'token' field"
   return token
 
-def getQueryM? (β : Type) (tokenM: MetaM UInt64) [FromTaskJson β] : TermElabM (Option β) := do
+def getQuery? (β : Type) (token: UInt64) [FromTaskJson β] : TermElabM (Option β) := do
   let pipe ← getPipeM
-  let token ← tokenM
   let req := Json.mkObj [("mode", "lookup"), ("token", toJson token)]
   let json ← pipe.response req
   let .ok status :=
@@ -732,6 +786,15 @@ def getQueryM? (β : Type) (tokenM: MetaM UInt64) [FromTaskJson β] : TermElabM 
   match status with
   | .completed _ result => return some <| ← fromTaskJson β result
   | .running _ => return none
+
+def getQueryM? (β : Type) (tokenM: MetaM UInt64) [FromTaskJson β] : TermElabM (Option β) := do
+  let token ← tokenM
+  getQuery? β token
+
+def getCommandSeq? (β : Type) (token: UInt64) [FromTaskJson β][ToCommandSeq β] :
+  TermElabM (Option (TSyntax ``commandSeq)) := do
+  let q? ← (getQuery? β token)
+  q?.mapM toCommandSeq
 
 structure QueryToken (β : Type) where
   token : UInt64
@@ -762,7 +825,7 @@ def checkM (x? : TermElabM (Option β)) : TermElabM Bool := do
   let xOpt ← x?
   return xOpt.isSome
 
-elab "#generate" type:term "from" input:term "as" name:ident : command => do
+elab "#generateToken" type:term "from" input:term "as" name:ident : command => do
   let stx ← `(QueryToken.get $input $type)
   let token ← Command.liftTermElabM do
     elabTerm stx none
@@ -773,7 +836,7 @@ elab "#generate" type:term "from" input:term "as" name:ident : command => do
   let cmd' ← `(command| #eval $nameIdent)
   Command.elabCommand cmd'
 
-elab "#generateToken" type:term "from" input:term "as" name:ident : command => do
+elab "#generate" type:term "from" input:term "as" name:ident : command => do
   let stx ← `(mkQueryM $input $type)
   let token ← Command.liftTermElabM do
     let tokenExpr ← elabTerm stx none
@@ -788,28 +851,23 @@ elab "#generateToken" type:term "from" input:term "as" name:ident : command => d
 
 
 open Command
-syntax (name := lookupCmd) "#lookup" ident : command
+syntax (name := lookupCmd) "#lookup" term "from" ident : command
 @[command_elab lookupCmd] def lookupImplementation : CommandElab := fun stx =>
    match stx with
-  | `(command| #lookup $name) => do
+  | `(command| #lookup $type from $name) => do
     let tokenIdent := mkIdent <| name.getId ++ "token".toName
-    let rhs? : Option Syntax.Term ← Command.liftTermElabM do
-      let lkp ← mkAppM ``QueryToken.lookupM? #[mkConst tokenIdent.getId]
-      let chkM  ←
-        unsafe evalExpr (TermElabM Bool) (← mkAppM ``TermElabM #[mkConst ``Bool])
-          (← mkAppM ``checkM #[lkp])
-      let chk ← chkM
-      if chk then
-        let exp ← mkAppM ``getM #[lkp]
-        let exp ← reduce exp
-        PrettyPrinter.delab exp
-      else pure none
-    match rhs? with
-    | some rhs =>
-      let id := mkIdent name.getId
-      let cmd ← `(command| def $id := $rhs)
-      Command.liftTermElabM do Tactic.TryThis.addSuggestion stx cmd
-      Command.elabCommand cmd
+    let result? : Option (TSyntax ``commandSeq) ← Command.liftTermElabM do
+      let stx ← `(getCommandSeq? $type $tokenIdent)
+      let expM ← elabTerm stx none
+      let csExp := toExpr (``commandSeq : Lean.SyntaxNodeKinds)
+      let x? ← unsafe evalExpr (TermElabM (Option (TSyntax ``commandSeq))) (← mkAppM ``TermElabM #[← mkAppM ``Option #[← mkAppM ``TSyntax #[csExp]]]) expM
+      x?
+    match result? with
+    | some result =>
+      Command.liftTermElabM do Tactic.TryThis.addSuggestion stx result
+      let cmds := getCommands result
+      for cmd in cmds do
+        Command.elabCommand cmd
     | none =>
       logInfo s!"Result for {name} not ready yet. Please try again later."
   | _ => throwUnsupportedSyntax
