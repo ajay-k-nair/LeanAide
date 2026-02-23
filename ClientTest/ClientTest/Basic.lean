@@ -16,4 +16,12 @@ def tokenM := mkQueryM text TheoremWithCode
 
 #eval tokenM
 
-#aide_eval getQueryM? TheoremWithCode tokenM
+-- #aide_eval getQueryM? TheoremWithCode tokenM
+
+set_option lean_aide.translate.prompt_size 7
+
+def tokenM' := mkQueryM text TheoremWithCode
+
+#eval tokenM'
+
+#aide_eval getQueryM? TheoremWithCode tokenM'

@@ -15,8 +15,8 @@ open LeanAide Lean
 /--
 Executing a task with Json input and output. These are for the server. When a task fails, the rest of the tasks are not executed. Results are accumulated in the output.
 -/
-def runTask (data: Json) (translator : Translator) : TranslateM Json :=
-  let translator := translator.patch data
+def runTask (data: Json) (translator : Translator) : TranslateM Json := do
+  let translator ←  translator.patch data
   match data.getObjVal? "task" with
   | Except.error e  => return Json.mkObj [("result", "error"), ("error", s!"no task found: {e}")]
   | Except.ok (.str task) =>
@@ -48,7 +48,8 @@ def runTaskChain (data: Json) (translator : Translator) : List (String × Json) 
 | ((task, config) :: tasks) => do
   let data := data.setObjValAs! "task" (Json.str task)
   logToStdErr `leanaide.translate.info s!"running task {task}"
-  let result ← runTask data <| translator.patch config
+  let translator ← translator.patch config
+  let result ← runTask data translator
   appendLog "server" (force := true) <| Json.mkObj [("data", data), ("output", result)]
   match result.getObjVal? "result" with
   | Except.error e =>
@@ -63,7 +64,7 @@ Responds to a request with a JSON response. The response is a JSON object that i
 -/
 def response (translator : Translator)(data: Json)  :
     TranslateM Json := do
-  let translator := translator.patch data
+  let translator ←  translator.patch data
   match data.getObjValAs? (List String) "tasks" with
   | Except.ok tasks => runTaskList data translator tasks
   | _ =>
