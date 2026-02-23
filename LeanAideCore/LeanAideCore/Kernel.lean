@@ -112,6 +112,13 @@ instance : Proxy TheoremProved TheoremProvedProxy where
     let theoremCode ← elabType theoremCodeStx
     return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩, document := x.document }
 
+instance TheoremProved.commandSeq : ToCommandSeq TheoremProved where
+  commandSeq x := do
+    let pfIdent := mkIdent <| x.name ++ "pf".toName
+    let pfStr := Syntax.mkStrLit x.document
+    let pfStx ← `(def $pfIdent := $pfStr)
+    mkCommandSeq #[← `(command| $x.statement:command), ← `(command| $pfStx:command)]
+
 structure TheoremStructuredProof extends TheoremProved where
   documentJson : Json
 
@@ -128,6 +135,11 @@ instance : Proxy TheoremStructuredProof TheoremStructuredProofProxy where
     let .ok theoremStatementStx := runParserCategory (← getEnv) `command x.statement | throwError s!"Error while parsing {x.statement}"
     let theoremCode ← elabType theoremCodeStx
     return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩, document := x.document, documentJson := x.documentJson }
+
+instance TheoremStructuredProof.commandSeq : ToCommandSeq TheoremStructuredProof where
+  commandSeq x := do
+    let cmds := getCommands <| ← toCommandSeq (x.toTheoremProved)
+    mkCommandSeq <| cmds
 
 structure TheoremProofCode extends TheoremStructuredProof where
   documentCode : TSyntax ``commandSeq
@@ -148,6 +160,10 @@ instance : Proxy TheoremProofCode TheoremProofCodeProxy where
     let .ok documentCodeStx := runParserCategory (← getEnv) `commandSeq x.documentCode | throwError s!"Error while parsing {x.documentCode}"
     return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩, document := x.document, documentJson := x.documentJson, documentCode := ⟨documentCodeStx⟩ }
 
+instance TheoremProofCode.commandSeq : ToCommandSeq TheoremProofCode where
+  commandSeq x := do
+    let cmds := getCommands <| ← toCommandSeq (x.toTheoremStructuredProof)
+    mkCommandSeq <| cmds ++ getCommands x.documentCode
 
 /--
 Task acting on type `α` and returning type `β`, where `α` is the input type and `β` is the output type. This is used to capture the various tasks that LeanAide can perform, such as translating a theorem, generating documentation, and so on. The `TaskName` typeclass is used to associate a string name with each task, which is used when querying the LeanAide server.
