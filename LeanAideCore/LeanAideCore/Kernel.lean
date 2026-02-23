@@ -737,6 +737,9 @@ structure QueryToken (β : Type) where
   token : UInt64
   fromTaskJsonβ : FromTaskJson β
 
+instance {β : Type} : Repr (QueryToken β) where
+  reprPrec qt _ := s!"QueryToken(token = {qt.token})"
+
 def QueryToken.get {α : Type}(x : α) (β : Type) [TaskList α β] [JsonForTask α][inst: FromTaskJson β] :
   MetaM <| QueryToken β := do
   let tokenM ←  mkQueryM x β
@@ -745,7 +748,32 @@ def QueryToken.get {α : Type}(x : α) (β : Type) [TaskList α β] [JsonForTask
 def QueryToken.lookup? (self: QueryToken β) : TermElabM (Option β) := do
   @getQueryM? β (pure self.token) self.fromTaskJsonβ
 
+def QueryToken.lookupM? (selfM: MetaM (QueryToken β)) : TermElabM (Option β) := do
+  let self ← selfM
+  @getQueryM? β (pure self.token) self.fromTaskJsonβ
+
+def getM (x? : TermElabM (Option β)) : TermElabM β := do
+  let xOpt ← x?
+  match xOpt with
+  | some x => return x
+  | none => throwError "Result not ready yet. Please try again later."
+
+def checkM (x? : TermElabM (Option β)) : TermElabM Bool := do
+  let xOpt ← x?
+  return xOpt.isSome
+
 elab "#generate" type:term "from" input:term "as" name:ident : command => do
+  let stx ← `(QueryToken.get $input $type)
+  let token ← Command.liftTermElabM do
+    elabTerm stx none
+  let nameIdent := mkIdent <| name.getId ++ "token".toName
+  let tokenStx ← Command.liftTermElabM do PrettyPrinter.delab token
+  let cmd ← `(command| def $nameIdent:ident := $tokenStx)
+  Command.elabCommand cmd
+  let cmd' ← `(command| #eval $nameIdent)
+  Command.elabCommand cmd'
+
+elab "#generateToken" type:term "from" input:term "as" name:ident : command => do
   let stx ← `(mkQueryM $input $type)
   let token ← Command.liftTermElabM do
     let tokenExpr ← elabTerm stx none
@@ -757,6 +785,33 @@ elab "#generate" type:term "from" input:term "as" name:ident : command => do
   Command.elabCommand cmd
   let cmd' ← `(command| #eval $nameIdent)
   Command.elabCommand cmd'
+
+
+open Command
+syntax (name := lookupCmd) "#lookup" ident : command
+@[command_elab lookupCmd] def lookupImplementation : CommandElab := fun stx =>
+   match stx with
+  | `(command| #lookup $name) => do
+    let tokenIdent := mkIdent <| name.getId ++ "token".toName
+    let rhs? : Option Syntax.Term ← Command.liftTermElabM do
+      let lkp ← mkAppM ``QueryToken.lookupM? #[mkConst tokenIdent.getId]
+      let chkM  ←
+        unsafe evalExpr (TermElabM Bool) (← mkAppM ``TermElabM #[mkConst ``Bool])
+          (← mkAppM ``checkM #[lkp])
+      let chk ← chkM
+      if chk then
+        let exp ← mkAppM ``getM #[lkp]
+        PrettyPrinter.delab exp
+      else pure none
+    match rhs? with
+    | some rhs =>
+      let id := mkIdent name.getId
+      let cmd ← `(command| def $id := $rhs)
+      Command.liftTermElabM do Tactic.TryThis.addSuggestion stx cmd
+      Command.elabCommand cmd
+    | none =>
+      logInfo s!"Result for {name} not ready yet. Please try again later."
+  | _ => throwUnsupportedSyntax
 
 namespace KernelM
 

@@ -12,6 +12,9 @@ set_option trace.leanaide.translate.debug true
 
 #eval testToken.token
 
+def testToken :=
+  getM (QueryToken.lookupM? testToken.token)
+
 #eval LeanAidePipe.response <| json% {"task": "echo"}
 
 def text : TheoremStatementText :=⟨"There are infinitely many odd numbers"⟩
