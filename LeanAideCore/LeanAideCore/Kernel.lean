@@ -115,6 +115,9 @@ def taskList (α β: Type) [inst: TaskList α β] : List String := inst.taskList
 instance TaskName.translateThm : TaskName TheoremStatementText TheoremWithCode where
   taskName := "translate_thm_detailed"
 
+instance TaskName.translateThmFromString : TaskName String TheoremWithCode where
+  taskName := "translate_thm_detailed"
+
 instance TaskName.proveTheoremForFormalization : TaskName TheoremWithCode TheoremProved where
   taskName := "prove_for_formalization"
 
@@ -591,6 +594,17 @@ instance TheoremStatementText.ofTaskJson : FromTaskJson TheoremStatementText whe
     | .error _ => throwError "response has no 'theorem_text' field"
     return { theoremText := theoremText }
 
+instance String.toJsonForTask : JsonForTask String where
+  toJsonForTask s := do
+    return Json.mkObj [("theorem_text", s)]
+
+instance String.ofTaskJson : FromTaskJson String where
+  fromJsonForTask json := do
+    let theoremText : String ← match json.getObjValAs? String "theorem_text" with
+    | .ok text => pure text
+    | .error _ => throwError "response has no 'theorem_text' field"
+    return theoremText
+
 instance TheoremWithCode.ofTaskJson : FromTaskJson TheoremWithCode where
   fromJsonForTask json := do
     let (name, thmExpr, cmd) ← LeanAidePipe.translateThmDetailedDecode json
@@ -687,7 +701,7 @@ def getCodeJsonTokenM (json: Json) : MetaM UInt64 := do
   let .ok token := json.getObjValAs? UInt64 "token" | throwError "response has no 'token' field"
   return token
 
-open LeanAidePipe in
+open LeanAidePipe
 def updateCodeByToken (token: UInt64) :
     TermElabM (Option (TSyntax ``commandSeq))  := do
   let pipe ← getPipeM
@@ -699,7 +713,6 @@ def updateCodeByToken (token: UInt64) :
   | .completed _ result => return some <| ← codeFromJsonDecode result
   | .running _ => return none
 
-open LeanAidePipe in
 def mkQueryM {α : Type}(x : α) (β : Type) [TaskList α β] [JsonForTask α][FromTaskJson β] : MetaM UInt64 := do
   let json ← jsonForTask x
   let taskList := taskList α β
@@ -709,7 +722,6 @@ def mkQueryM {α : Type}(x : α) (β : Type) [TaskList α β] [JsonForTask α][F
   let .ok token := json.getObjValAs? UInt64 "token" | throwError "response has no 'token' field"
   return token
 
-open LeanAidePipe in
 def getQueryM? (β : Type) (tokenM: MetaM UInt64) [FromTaskJson β] : TermElabM (Option β) := do
   let pipe ← getPipeM
   let token ← tokenM
@@ -720,6 +732,31 @@ def getQueryM? (β : Type) (tokenM: MetaM UInt64) [FromTaskJson β] : TermElabM 
   match status with
   | .completed _ result => return some <| ← fromTaskJson β result
   | .running _ => return none
+
+structure QueryToken (β : Type) where
+  token : UInt64
+  fromTaskJsonβ : FromTaskJson β
+
+def QueryToken.get {α : Type}(x : α) (β : Type) [TaskList α β] [JsonForTask α][inst: FromTaskJson β] :
+  MetaM <| QueryToken β := do
+  let tokenM ←  mkQueryM x β
+  return { token := tokenM, fromTaskJsonβ := inst }
+
+def QueryToken.lookup? (self: QueryToken β) : TermElabM (Option β) := do
+  @getQueryM? β (pure self.token) self.fromTaskJsonβ
+
+elab "#generate" type:term "from" input:term "as" name:ident : command => do
+  let stx ← `(mkQueryM $input $type)
+  let token ← Command.liftTermElabM do
+    let tokenExpr ← elabTerm stx none
+    let tokenM ← unsafe evalExpr (MetaM UInt64) (← mkAppM ``MetaM #[mkConst ``UInt64]) tokenExpr
+    tokenM
+  let nameIdent := mkIdent <| name.getId ++ "token".toName
+  let tokenStx := Syntax.mkNatLit token.toNat
+  let cmd ← `(command| def $nameIdent:ident : UInt64 := $tokenStx)
+  Command.elabCommand cmd
+  let cmd' ← `(command| #eval $nameIdent)
+  Command.elabCommand cmd'
 
 namespace KernelM
 

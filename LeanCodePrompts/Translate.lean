@@ -22,9 +22,9 @@ open LeanAide.Meta
 namespace LeanAide
 open Translate
 
--- #logIO leanaide.elaboration.info
+#logIO leanaide.elaboration.info
 #logIO leanaide.translate.debug
--- #logIO leanaide.frontend.info
+#logIO leanaide.frontend.info
 #logIO leanaide.translate.info
 
 @[default_instance]
