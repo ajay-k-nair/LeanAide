@@ -74,7 +74,7 @@ structure TheoremWithCode extends TheoremStatementText where
   theoremCode : Expr
   statement : Syntax.Command
 
-instance : ToCommandSeq TheoremWithCode where
+instance TheoremWithCode.toCommandSeq : ToCommandSeq TheoremWithCode where
   commandSeq x := do
     `(commandSeq| $x.statement:command)
 

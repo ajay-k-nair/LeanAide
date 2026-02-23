@@ -38,3 +38,7 @@ def tokenM' := mkQueryM text TheoremWithCode
 def tokenM'' := mkQueryM "There are infinitely many odd numbers" TheoremWithCode
 
 #eval tokenM''
+
+#generate TheoremWithCode from "There  are infinitely many odd numbers" as test'
+
+#lookup TheoremWithCode from test'
