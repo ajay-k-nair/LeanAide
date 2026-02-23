@@ -199,6 +199,9 @@ namespace LeanAidePipe
 /-- Create a `LeanAidePipe` from a URL, using `curl` to send requests. -/
 def fromURL (url: String) : LeanAidePipe := {
   queryResponse (data: Json) := do
+    let data := match ← envPatch? with
+      | some patch => data.patch patch
+      | none => data
     let output ← IO.Process.run {cmd := "curl", args := #[url, "-X", "POST", "-H", "Content-Type: application/json", "--data", data.compress]}
     let .ok response :=
       Json.parse output | throwError s!"Failed to parse response: \n{output}"
