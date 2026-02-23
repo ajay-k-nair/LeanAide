@@ -87,6 +87,10 @@ def cliPatch : Option (Json × (List JsonDiff)) :=
 
 #eval envPatch?
 
+set_option lean_aide.translate.choices 4
+
+#eval envPatch?
+
 def authPatch : Option (Json × (List JsonDiff)) :=
   let translator₁ : Translator := {}
   let json₁ := toJson translator₁

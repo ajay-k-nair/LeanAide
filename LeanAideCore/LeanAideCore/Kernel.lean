@@ -200,7 +200,7 @@ namespace LeanAidePipe
 def fromURL (url: String) : LeanAidePipe := {
   queryResponse (data: Json) := do
     let data := match ← envPatch? with
-      | some patch => data.patch patch
+      | some patch => data.patch <| Json.mkObj [("translator", patch)]
       | none => data
     let output ← IO.Process.run {cmd := "curl", args := #[url, "-X", "POST", "-H", "Content-Type: application/json", "--data", data.compress]}
     let .ok response :=
