@@ -61,8 +61,7 @@ def TheoremCode.ofNameM (name: Name) : TermElabM TheoremCode := do
   let statement ← `(command| def $nameIdent : Prop := $typeStx)
   return { text := text, name := name, type := typeStr.pretty, statement := (← PrettyPrinter.ppCommand statement).pretty }
 
-instance : Proxy Conjecture  where
-  β := TheoremCode
+instance : Proxy Conjecture TheoremCode  where
   to t := do
     let typeStr ← ppExpr t.type
     let stmtStr ← PrettyPrinter.ppCommand t.statement
@@ -324,16 +323,10 @@ instance GenerateM.composition (α γ : Type) (β : outParam Type) [r1 : Generat
     r2.generateM d
 
 set_option synthInstance.checkSynthOrder false in
-def GenerateM.compositionProxyTo (α γ : Type)  [r1 : Proxy α ] [r2 : GenerateM r1.β γ] : GenerateM α γ where
+def GenerateM.compositionProxyTo (α γ : Type){β : outParam Type}[ToJson β][Repr β]  [r1 : Proxy α β] [r2 : GenerateM β γ] : GenerateM α γ where
   generateM a := do
     let d ← r1.to a
     r2.generateM d
-
-set_option synthInstance.checkSynthOrder false in
-def GenerateM.compositionProxyOf (α : Type) {β : outParam Type}  [ToJson β] [FromJson β] [Repr β] [r2 : InverseProxy β][r1 : GenerateM α β] : GenerateM α r2.α where
-  generateM a := do
-    let d ← r1.generateM a
-    r2.of d
 
 namespace Discussion
 class Continuation (α β : Type) where

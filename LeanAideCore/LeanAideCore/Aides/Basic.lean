@@ -520,31 +520,67 @@ elab "s%" s:term : term => do
     elabTerm stx (mkConst ``String)
   return res
 
-class Proxy (α : Type)  where
-  β : Type
+class Proxy (α : Type) (β : outParam Type)[ToJson β][Repr β]  where
   toJsonInst : ToJson β := by apply inferInstance
   to : α → TermElabM β
   of : β → TermElabM α
 
+-- Probably not needed (from before changes in `Proxy`), but keeping for now just in case.
 class InverseProxy (β  : Type)  where
   α  : Type
   of : β → TermElabM α
   to : α → TermElabM β
 
-def proxy {α: Type}[inst: Proxy α ] (a : α) : TermElabM inst.β :=
+def proxy {α β : Type}[ToJson β][Repr β][inst: Proxy α β] (a : α) : TermElabM β :=
   inst.to a
 
-def unproxy {β : Type}   [inst : InverseProxy β] (b : β) : TermElabM inst.α :=
+def unproxy {α β : Type} [ToJson β][Repr β]  [inst : Proxy α β] (b : β) : TermElabM α :=
   inst.of b
 
-def proxyJson {α : Type} [inst: Proxy α] (a : α) : TermElabM Json := do
+def proxyJson {α β : Type}[ToJson β][Repr β] [inst: Proxy α β] (a : α) : TermElabM Json := do
   let b   ← proxy a
-  let _ : ToJson (Proxy.β α) := inst.toJsonInst
+  let _ : ToJson β := inst.toJsonInst
   return toJson b
 
-def unproxyJson {β : Type} [FromJson β] [inst: InverseProxy β] (j: Json) : TermElabM inst.α := do
+def unproxyJson {α β : Type} [FromJson β][ToJson β][Repr β] [inst: Proxy α β] (j: Json) : TermElabM α := do
   let .ok (b : β) := fromJson? j | throwError s!"failed to parse {j}"
   unproxy b
+
+class ReprM (α : Type u) where
+  reprPrecM : α → Nat → TermElabM Format
+
+instance {α : Type u}[Repr α] : ReprM α  where
+  reprPrecM n x := return reprPrec n x
+
+instance {α β : Type}[ToJson β][Repr β] [Proxy α β] : ReprM α where
+  reprPrecM a x := do
+    let b ← proxy a
+    return reprPrec b x
+
+def reprM {α : Type u}[ReprM α] (x : α) : TermElabM String := do
+  let f ← ReprM.reprPrecM x 0
+  return f.pretty
+
+def reprPrecM {α : Type u}[ReprM α] (x : α) (prec : Nat) : TermElabM String := do
+  let f ← ReprM.reprPrecM x prec
+  return f.pretty
+
+def showM {α : Type u}[ReprM α] (x : α) : TermElabM Format := do
+  reprM x
+
+macro "#aide_eval" t:term : command => do
+  `(command| #eval showM ($t))
+
+-- #aide_eval 3
+
+instance optProxy {α β : Type}[ToJson β][Repr β] [inst : Proxy α β]  : Proxy (Option α) (Option β) where
+  toJsonInst := by apply inferInstance
+  to
+    | none => pure none
+    | some a => do return some <| ←  inst.to a
+  of
+    | none => pure none
+    | some b => do return some <| ←  inst.of b
 
 def pythonPath : IO String := do
   let topFiles ←  ("." : FilePath).readDir

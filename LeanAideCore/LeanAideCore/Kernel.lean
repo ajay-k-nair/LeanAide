@@ -61,6 +61,7 @@ class Kernel where
 
 structure TheoremStatementText where
   theoremText : String
+deriving Repr, ToJson, FromJson
 
 structure TheoremWithCode extends TheoremStatementText where
   name : Name
