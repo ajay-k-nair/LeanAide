@@ -571,6 +571,12 @@ def showM {α : Type u}[ReprM α] (x : α) : TermElabM Format := do
 macro "#aide_eval" t:term : command => do
   `(command| #eval showM ($t))
 
+instance {α : Type}[ReprM α] : ReprM (TermElabM α) where
+  reprPrecM x n := do
+    let y ← x
+    reprPrecM y n
+
+
 -- #aide_eval 3
 
 instance optProxy {α β : Type}[ToJson β][Repr β] [inst : Proxy α β]  : Proxy (Option α) (Option β) where

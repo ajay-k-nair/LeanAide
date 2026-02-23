@@ -68,6 +68,23 @@ structure TheoremWithCode extends TheoremStatementText where
   theoremCode : Expr
   statement : Syntax.Command
 
+structure TheoremWithCodeProxy extends TheoremStatementText where
+  name : Name
+  theoremCode : String
+  statement : String
+deriving Repr, ToJson, FromJson
+
+instance : Proxy TheoremWithCode TheoremWithCodeProxy where
+  to  x := do
+    let theoremCode ← ppExpr x.theoremCode
+    let statement ← PrettyPrinter.ppCommand x.statement
+    return { theoremText := x.theoremText, name := x.name, theoremCode := theoremCode.pretty, statement := statement.pretty }
+  of x := do
+    let .ok theoremCodeStx := runParserCategory (← getEnv) `term x.theoremCode | throwError s!"Error while parsing {x.theoremCode}"
+    let .ok theoremStatementStx := runParserCategory (← getEnv) `command x.statement | throwError s!"Error while parsing {x.statement}"
+    let theoremCode ← elabType theoremCodeStx
+    return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩ }
+
 structure TheoremProved extends TheoremWithCode where
   document : String
 
@@ -684,8 +701,7 @@ def mkQueryM {α : Type}(x : α) (β : Type) [TaskList α β] [JsonForTask α][F
   let json ← jsonForTask x
   let taskList := taskList α β
   let pipe ← getPipeM
-  let req ←  codeFromJsonEncode json
-  let req := req.mergeObj (Json.mkObj [("mode", "async"), ("tasks", toJson taskList)])
+  let req := json.mergeObj (Json.mkObj [("mode", "async"), ("tasks", toJson taskList)])
   let json ← pipe.response req
   let .ok token := json.getObjValAs? UInt64 "token" | throwError "response has no 'token' field"
   return token
