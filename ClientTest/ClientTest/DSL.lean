@@ -10,10 +10,7 @@ set_option trace.leanaide.translate.debug true
 
 #generate TheoremWithCode from "There are infinitely many odd numbers" as testToken
 
-#eval testToken.token
-
-def testToken :=
-  getM (QueryToken.lookupM? testToken.token)
+#lookup testToken
 
 #eval LeanAidePipe.response <| json% {"task": "echo"}
 
