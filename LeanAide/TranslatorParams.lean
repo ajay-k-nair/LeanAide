@@ -72,7 +72,39 @@ def Translator.patch (translator: Translator) (data: Json) : CoreM Translator :=
     traceAide `leanaide.translate.info s!"No translator config found in data: {data}"
     return translator
 
-def Translator.CliDefaultJson := json% {"useInstructions": true,
+def launch (_ : Parsed) : IO UInt32 := return 0
+
+def process : Cmd := `[Cli|
+  leanaide_process VIA launch;
+  "Elaborate a set of inputs and report whether successful and the result if successful."
+
+  FLAGS:
+    include_fixed;         "Include the 'Lean Chat' fixed prompts."
+    p, prompts : Nat;      "Number of example prompts (default 20)."
+    descriptions : Nat; "Number of example descriptions (default 2)."
+    concise_descriptions : Nat; "Number of example concise descriptions (default 2)."
+    leansearch_prompts: Nat; "Number of examples from LeanSearch"
+    moogle_prompts: Nat; "Number of examples from Moogle"
+    n, num_responses : Nat;    "Number of responses to ask for (default 8)."
+    t, temperature : Nat;  "Scaled temperature `t*10` for temperature `t` (default 10)."
+    m, model : String ; "Model to be used (default `gpt-5.1`)"
+    azure; "Use Azure instead of OpenAI."
+    gemini; "Use Gemini with OpenAI API."
+    url : String; "URL to query (for a local server)."
+    examples_url : String; "URL to query for nearby embeddings (for a generic server)."
+    auth_key : String; "Authentication key (for a local or generic server)."
+    show_prompt; "Output the prompt to the LLM."
+    show_elaborated; "Output the elaborated terms"
+    max_tokens : Nat; "Maximum tokens to use in the translation."
+    no_sysprompt; "The model has no system prompt (not relevant for GPT models)."
+
+]
+
+def defParse := Cli.Cmd.parse process [] |>.toOption.get!.2
+
+def Translator.CliDefault := Translator.ofCli defParse
+
+def Translator.CliDefaultJson := json% {"useInstructions": false,
  "toChat": "simple",
  "server": {"openAI": {"model": "gpt-5", "authHeader?": null}},
  "roundTripSelect": false,
@@ -84,19 +116,15 @@ def Translator.CliDefaultJson := json% {"useInstructions": true,
   [{"similarSearch": {"n": 20, "descField": "docString"}},
    {"similarSearch": {"n": 2, "descField": "concise-description"}},
    {"similarSearch": {"n": 2, "descField": "description"}}]},
- "params": {"temp": 1, "stopTokens": [], "n": 10, "maxTokens": 1600},
+ "params": {"temp": 1, "stopTokens": [], "n": 8, "maxTokens": 1600},
  "messageBuilder": {"directBuilder":
   {"userHead": "user",
   "headMessage":
   "You are a coding assistant who translates from natural language to Lean Theorem Prover code following examples. The translated code is preceded by `import Mathlib._`, so do not include import statements. Suppress proofs for brevity. Follow EXACTLY the examples given.",
   "egsHead":
   "The following are some examples of statements and their translations (proofs are suppressed for brevity):",
-  "egResponseHead": "## Lean Code\
-\
-",
-  "egQueryHead": "## Natural language statement\
-\
-"}}}
+  "egResponseHead": "## Lean Code\n\n",
+  "egQueryHead": "## Natural language statement\n\n"}}}
 
 @[deprecated Translator.patch (since := "2025-11-04")]
 def Translator.configure (translator: Translator) (config: Json) : Translator :=

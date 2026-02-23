@@ -8,7 +8,7 @@ open Lean
 
 namespace LeanAide
 
-#eval loadTomlAsJson? "lakefile.toml"
+-- #eval loadTomlAsJson? "lakefile.toml"
 
 def dj := toJson ({}: Translator) |>.pretty
 
@@ -66,21 +66,29 @@ def compareDefaultM : CoreM (List JsonDiff) := do
 
 #eval compareDefaultM
 
-def cliDiff : IO (List JsonDiff) := do
+def cliDiff' : IO (List JsonDiff) := do
   let translator₁ : Translator := {}
   let json₁ := Json.mkObj [("translator", toJson translator₁)]
   let json₂ := Json.mkObj [("translator", toJson Translator.CliDefaultJson)]
   let diff := jsonDiff json₁ json₂
   return diff
 
+#eval cliDiff'
+
+def cliDiff : IO (List JsonDiff) := do
+  let json₁ := Json.mkObj [("translator", toJson Translator.CliDefaultJson)]
+  let json₂ := Json.mkObj [("translator", toJson <| ← Translator.CliDefault)]
+  let diff := jsonDiff json₁ json₂
+  return diff
+
 #eval cliDiff
 
-def cliPatch : Option (Json × (List JsonDiff)) :=
+def cliPatch : CoreM (Option (Json × (List JsonDiff))) := do
   let translator₁ : Translator := {}
   let json₁ := toJson translator₁
-  let json₂ := toJson Translator.CliDefaultJson
+  let json₂ := toJson <| ← Translator.CliDefault
   let diff? := json₁.getPatch? json₂
-  diff?.map fun diff =>
+  return diff?.map fun diff =>
     (diff, jsonDiff (json₁.patch diff) json₂)
 
 #eval cliPatch
