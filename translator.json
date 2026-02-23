@@ -1,0 +1,22 @@
+{"useInstructions": false,
+ "toChat": "simple",
+ "server": {"openAI": {"model": "gpt-5", "authHeader?": null}},
+ "roundTripSelect": false,
+ "roundTrip": false,
+ "relDefs": {"seq": []},
+ "reasoningServer": {"openAI": {"model": "o3-mini", "authHeader?": null}},
+ "pb":
+ {"blend":
+  [{"similarSearch": {"n": 8, "descField": "docString"}},
+   {"similarSearch": {"n": 4, "descField": "concise-description"}},
+   {"similarSearch": {"n": 4, "descField": "description"}}]},
+ "params": {"temp": 1, "stopTokens": [], "n": 8, "maxTokens": 1600},
+ "messageBuilder":
+ {"directBuilder":
+  {"userHead": "user",
+   "headMessage":
+   "You are a coding assistant who translates from natural language to Lean Theorem Prover code following examples. The translated code is preceded by `import Mathlib._`, so do not include import statements. Suppress proofs for brevity. Follow EXACTLY the examples given.",
+   "egsHead":
+   "The following are some examples of statements and their translations (proofs are suppressed for brevity):",
+   "egResponseHead": "## Lean Code\n\n",
+   "egQueryHead": "## Natural language statement\n\n"}}}

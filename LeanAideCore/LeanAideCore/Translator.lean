@@ -170,14 +170,14 @@ register_option lean_aide.translate.prompt_size : Nat :=
     descr := "Number of document strings in a prompt (default 8)" }
 
 register_option lean_aide.translate.concise_desc_size : Nat :=
-  { defValue := 0
+  { defValue := 4
     group := "lean_aide.translate"
-    descr := "Number of concise descriptions in a prompt (default 0)" }
+    descr := "Number of concise descriptions in a prompt (default 4)" }
 
 register_option lean_aide.translate.desc_size : Nat :=
-  { defValue := 0
+  { defValue := 4
     group := "lean_aide.translate"
-    descr := "Number of descriptions in a prompt (default 0)" }
+    descr := "Number of descriptions in a prompt (default 4)" }
 
 
 register_option lean_aide.translate.choices : Nat :=
@@ -285,7 +285,15 @@ def chatServer : CoreM ChatServer := do
       return ChatServer.generic model url none (← hasSysPrompt)
 
 def Translator.defaultM : CoreM Translator := do
-  return {server := ← chatServer, pb := PromptExampleBuilder.similarBuilder (← promptSize) (← conciseDescSize) 0, params := ← chatParams, toChat := .simple}
+  return {server := ← chatServer, pb := PromptExampleBuilder.similarBuilder (← promptSize) (← conciseDescSize) (← descSize), params := ← chatParams, toChat := .simple}
+
+def envPatch? : CoreM <| Option Json := do
+  let translator₁ : Translator := {}
+  let json₁ := toJson translator₁
+  let translator₂ ← Translator.defaultM
+  let json₂ := toJson translator₂
+  let diff? := json₁.getPatch? json₂
+  return diff?
 
 def Translator.defaultDefM : CoreM Translator := do
   let t ← defaultM

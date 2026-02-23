@@ -107,7 +107,7 @@ instance : Append PromptExampleBuilder :=
 The new default PromptExampleBuilder.
 -/
 def default :=
-  PromptExampleBuilder.similarBuilder 8 4 4 ++ .searchBuilder 4 4
+  PromptExampleBuilder.similarBuilder 8 4 4 -- ++ .searchBuilder 4 4
 
 /--
 The classic default PromptExampleBuilder (which seems to work better).

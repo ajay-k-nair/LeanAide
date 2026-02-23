@@ -10,14 +10,21 @@ namespace LeanAide
 
 #eval loadTomlAsJson? "lakefile.toml"
 
-#eval loadTomlAsJson? "leanaide.toml"
+def dj := toJson ({}: Translator) |>.pretty
+
+def writTmp : IO Unit := do
+  let translator : Translator := {}
+  let json := toJson translator
+  IO.FS.writeFile "translator.json" json.pretty
+-- #eval writTmp
+
 
 def roundtrip : IO Lake.Toml.Value := do
   let .some json ← loadTomlAsJson? "lakefile.toml" | IO.throwServerError "Could not load lakefile.toml"
   let toml := Toml.ofJson json
   return toml
 
-def checkRoundtrip : IO (List JsonDiff) := do
+def compareTomlfileDefault : IO (List JsonDiff) := do
   let .some json₁ ← loadTomlAsJson? "leanaide.toml" | IO.throwServerError "Could not load leanaide.toml"
   let translator : Translator := {}
   let json₂ := Json.mkObj [("translator", toJson translator)]
@@ -27,7 +34,7 @@ def checkRoundtrip : IO (List JsonDiff) := do
 /--
 info: [LeanAide.JsonDiff.existsKey1only
    "logging"
-   "{\"translators\":{\"info\":{\"io\":true,\"file\":false},\"debug\":{\"io\":false,\"file\":false}}}",
+   "{\"translators\":{\"debug\":{\"file\":false,\"io\":false},\"info\":{\"file\":false,\"io\":true}}}",
  LeanAide.JsonDiff.atKey
    "translator"
    (LeanAide.JsonDiff.atKey
@@ -45,7 +52,7 @@ info: [LeanAide.JsonDiff.existsKey1only
      (LeanAide.JsonDiff.atKey "openAI" (LeanAide.JsonDiff.existsKey2only "authHeader?" "null")))]
 -/
 #guard_msgs in
-#eval checkRoundtrip
+#eval compareTomlfileDefault
 
 -- #eval writeTranslatorJson
 
@@ -78,16 +85,7 @@ def cliPatch : Option (Json × (List JsonDiff)) :=
 
 #eval cliPatch
 
-def envPatch : CoreM <| Option (Json × (List JsonDiff)) := do
-  let translator₁ : Translator := {}
-  let json₁ := toJson translator₁
-  let translator₂ ← Translator.defaultM
-  let json₂ := toJson translator₂
-  let diff? := json₁.getPatch? json₂
-  return diff?.map fun diff =>
-    (diff, jsonDiff (json₁.patch diff) json₂)
-
-#eval envPatch
+#eval envPatch?
 
 def authPatch : Option (Json × (List JsonDiff)) :=
   let translator₁ : Translator := {}

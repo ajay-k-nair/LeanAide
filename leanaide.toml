@@ -1,14 +1,14 @@
 [translator]
-useInstructions = true
+useInstructions = false
 toChat = "simple"
 roundTripSelect = false
 roundTrip = false
 
 [translator.server.openAI]
-model = "gpt-4o"
+model = "gpt-5"
 
-[translator.relDefs]
-seq = [ ]
+  [translator.relDefs]
+  seq = [ ]
 
 [translator.reasoningServer.openAI]
 model = "o3-mini"
@@ -28,26 +28,25 @@ descField = "concise-description"
 n = 4
 descField = "description"
 
-[[translator.pb.blend]]
-[translator.pb.blend.leansearch]
-preferDocs = true
-n = 4
-descFields = [ "concise-description", "description" ]
+  [translator.params]
+  temp = 1
+  stopTokens = [ ]
+  n = 8
+  maxTokens = 1_600
 
-[[translator.pb.blend]]
-[translator.pb.blend.moogle]
-preferDocs = true
-n = 4
-descFields = [ "concise-description", "description" ]
+[translator.messageBuilder.directBuilder]
+userHead = "user"
+headMessage = "You are a coding assistant who translates from natural language to Lean Theorem Prover code following examples. The translated code is preceded by `import Mathlib._`, so do not include import statements. Suppress proofs for brevity. Follow EXACTLY the examples given."
+egsHead = "The following are some examples of statements and their translations (proofs are suppressed for brevity):"
+egResponseHead = """
+## Lean Code
 
-[translator.params]
-temp = 1
-stopTokens = [ ]
-n = 10
-maxTokens = 1_600
+"""
+egQueryHead = """
+## Natural language statement
 
-[translator.messageBuilder.sysBuilder]
-developerId = "system"
+"""
+
 
 [logging]
 
