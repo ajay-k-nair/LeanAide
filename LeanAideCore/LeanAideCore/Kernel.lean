@@ -801,6 +801,32 @@ syntax (name := lookupCmd) "#lookup" ident : command
       let chk ← chkM
       if chk then
         let exp ← mkAppM ``getM #[lkp]
+        let exp ← reduce exp
+        PrettyPrinter.delab exp
+      else pure none
+    match rhs? with
+    | some rhs =>
+      let id := mkIdent name.getId
+      let cmd ← `(command| def $id := $rhs)
+      Command.liftTermElabM do Tactic.TryThis.addSuggestion stx cmd
+      Command.elabCommand cmd
+    | none =>
+      logInfo s!"Result for {name} not ready yet. Please try again later."
+  | _ => throwUnsupportedSyntax
+
+syntax (name := lookupCmdNaive) "#lookup_naive" ident : command
+@[command_elab lookupCmdNaive] def lookupNaiveImplementation : CommandElab := fun stx =>
+   match stx with
+  | `(command| #lookup_naive $name) => do
+    let tokenIdent := mkIdent <| name.getId ++ "token".toName
+    let rhs? : Option Syntax.Term ← Command.liftTermElabM do
+      let lkp ← mkAppM ``QueryToken.lookupM? #[mkConst tokenIdent.getId]
+      let chkM  ←
+        unsafe evalExpr (TermElabM Bool) (← mkAppM ``TermElabM #[mkConst ``Bool])
+          (← mkAppM ``checkM #[lkp])
+      let chk ← chkM
+      if chk then
+        let exp ← mkAppM ``getM #[lkp]
         PrettyPrinter.delab exp
       else pure none
     match rhs? with
