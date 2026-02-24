@@ -3,6 +3,7 @@ import LeanAideCore.Aides
 import LeanAideCore.TranslateM
 import LeanAideCore.Translator
 import LeanAideCore.TaskStatus
+import LeanAideCore.Syntax.Basic
 
 
 open Lean Meta Elab Term Parser
@@ -135,6 +136,8 @@ instance : Proxy TheoremStructuredProof TheoremStructuredProofProxy where
     let .ok theoremStatementStx := runParserCategory (← getEnv) `command x.statement | throwError s!"Error while parsing {x.statement}"
     let theoremCode ← elabType theoremCodeStx
     return { theoremText := x.theoremText, name := x.name, theoremCode, statement := ⟨theoremStatementStx⟩, document := x.document, documentJson := x.documentJson }
+
+-- #check getJsonSyntax
 
 instance TheoremStructuredProof.commandSeq : ToCommandSeq TheoremStructuredProof where
   commandSeq x := do

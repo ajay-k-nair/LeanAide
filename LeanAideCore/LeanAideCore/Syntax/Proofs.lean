@@ -3,6 +3,7 @@ import LeanAideCore.Kernel
 import LeanAideCore.Discussion
 import LeanAideCore.KernelGenerators
 import LeanAideCore.Syntax.Basic
+import LeanAideCore.Syntax.Kernel
 
 open Lean Meta Elab Term PrettyPrinter Tactic Command Parser
 
