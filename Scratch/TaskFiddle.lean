@@ -41,11 +41,6 @@ def slowFibIO : Nat → IO Nat
         MetaM (List MVarId × Term.State)-/
 #check IO.asTask /- {α : Type} → IO α → optParam Task.Priority Task.Priority.default → BaseIO (Task (Except IO.Error α)) -/
 #check evalTactic
-#check assignExprMVar
-#check evalTactic
-#check runTactic
-
-#check withMVarContext
 #check Elab.runFrontend
 
 def useTactic (type : Expr)
@@ -55,10 +50,6 @@ def useTactic (type : Expr)
     let term ← Elab.Term.elabTerm code (some type)
     Term.synthesizeSyntheticMVarsNoPostponing
     return term
-
-example : 1 ≤ 2 := by
-  checkpoint apply Nat.le_step
-  apply Nat.le_refl
 
 def egProof : TermElabM Expr := do
   let typeStx ← `((1 : Nat) ≤ 2)
@@ -77,16 +68,18 @@ elab "eg_proof" : term => do
 
 def eg :  1 ≤ 2 := eg_proof
 
-#reduce eg_proof -- #eval does not work
+open Std.Internal.IO Async
+def delayedWrite : Async Unit := do
+  let now' ← Std.Time.PlainDateTime.now
+  Async.sleep 3000
+  let now ← Std.Time.PlainDateTime.now
+  IO.FS.writeFile "delayed.txt" s!"This was written after a delay: {now} after starting at {now'}"
 
-#check egProof
+elab "#delayed_write" : command => do
+  AsyncTask.block <| ←
+    Async.toIO do
+      delayedWrite
 
-#synth BEq Expr
-deriving instance BEq for LocalDecl
-#synth BEq FVarId
-#synth Hashable Expr
-#synth Hashable FVarId
-deriving instance Hashable for LocalDecl
-#synth Hashable <| List LocalDecl
-#check PersistentStd.HashMap
-#check LocalContext
+#delayed_write
+
+#eval 3

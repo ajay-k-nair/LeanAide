@@ -458,7 +458,7 @@ def leanFromStructuredJsonTask (data: Json) (translator : Translator) : Translat
         let code ←
           PrettyPrinter.ppCategory ``commandSeq codeStx
         return Json.mkObj
-          [("result", "success"), ("document_code", code.pretty), ("declarations", toJson declarations), ("top_code", CodeGenerator.topCode)]
+          [("result", "success"), ("document_code", code.pretty), ("declarations", toJson declarations), ("top_code", topCode)]
       catch e =>
         return Json.mkObj [("result", "error"), ("error", s!"error in code generation: {← e.toMessageData.format}")]
     | _ => return Json.mkObj [("result", "error"), ("error", s!"no structured proof found")]
