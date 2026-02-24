@@ -42,3 +42,5 @@ def tokenM'' := mkQueryM "There are infinitely many odd numbers" TheoremWithCode
 #generate TheoremWithCode from "There  are infinitely many odd numbers" as test'
 
 #lookup TheoremWithCode from test'
+
+#write TheoremWithCode to_file ".." / "CodeGen" / "Infinite_odd.lean" from test'
