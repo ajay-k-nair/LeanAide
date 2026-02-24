@@ -142,7 +142,10 @@ instance : Proxy TheoremStructuredProof TheoremStructuredProofProxy where
 instance TheoremStructuredProof.commandSeq : ToCommandSeq TheoremStructuredProof where
   commandSeq x := do
     let cmds := getCommands <| ← toCommandSeq (x.toTheoremProved)
-    mkCommandSeq <| cmds
+    let js ← getJsonSyntax x.documentJson
+    let jsonIdent := mkIdent <| x.name ++ "json".toName
+    let jsonStx ← `(def $jsonIdent := json% $js)
+    mkCommandSeq <| cmds ++ #[jsonStx]
 
 structure TheoremProofCode extends TheoremStructuredProof where
   documentCode : TSyntax ``commandSeq
