@@ -210,8 +210,9 @@ def getCodeTacticsAux (translator: CodeGenerator) (goal :  MVarId)
       catch e =>
         let err ←   e.toMessageData.toString
         traceAide `leanaide.codegen.info err
-        let sourceId := mkIdent (s!"error_source_{hash source}").toName
-        let sourceTacs ← `(tacticSeq| sorry)
+        --let sourceId := mkIdent (s!"error_source_{hash source}").toName
+        let strLit := Syntax.mkStrLit s!"Error in processing:{source.pretty}"
+        let sourceTacs ← `(tacticSeq| trace $strLit)
           -- try
           --  let stx ← getJsonSyntax source
           --  `(tacticSeq| let $sourceId : Json := json% $stx; sorry)
