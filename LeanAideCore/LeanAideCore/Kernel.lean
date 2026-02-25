@@ -818,6 +818,15 @@ def getCommandSeq? (β : Type) (token: UInt64) [FromTaskJson β][ToCommandSeq β
   let q? ← (getQuery? β token)
   q?.mapM toCommandSeq
 
+def writeCommandSeq  (β : Type) (token: UInt64) (file : System.FilePath) [FromTaskJson β][ToCommandSeq β] :
+  TermElabM Bool := do
+  let q? ← (getQuery? β token)
+  match ← q?.mapM toCommandSeq with
+  | some cs => do
+    IO.FS.writeFile file (← showCommandSeq cs)
+    return true
+  | none => return false
+
 structure QueryToken (β : Type) where
   token : UInt64
   fromTaskJsonβ : FromTaskJson β
@@ -890,6 +899,26 @@ syntax (name := lookupCmd) "#lookup" term "from" ident : command
       let cmds := getCommands result
       for cmd in cmds do
         Command.elabCommand cmd
+    | none =>
+      logInfo s!"Result for {name} not ready yet. Please try again later."
+  | _ => throwUnsupportedSyntax
+
+syntax (name := writeCmd) "#write" term "to_file" filepath "from" ident : command
+@[command_elab writeCmd] def writeImplementation : CommandElab := fun stx =>
+   match stx with
+  | `(command| #write $type to_file $file from $name) => do
+    let file := filePath file
+    let tokenIdent := mkIdent <| name.getId ++ "token".toName
+    let result? : Option (TSyntax ``commandSeq) ← Command.liftTermElabM do
+      let stx ← `(getCommandSeq? $type $tokenIdent)
+      let expM ← elabTerm stx none
+      let csExp := toExpr (``commandSeq : Lean.SyntaxNodeKinds)
+      let x? ← unsafe evalExpr (TermElabM (Option (TSyntax ``commandSeq))) (← mkAppM ``TermElabM #[← mkAppM ``Option #[← mkAppM ``TSyntax #[csExp]]]) expM
+      x?
+    match result? with
+    | some result =>
+      Command.liftTermElabM do IO.FS.writeFile file <| topCode ++ (← showCommandSeq result)
+      logInfo s!"Result for {name} written to {file}."
     | none =>
       logInfo s!"Result for {name} not ready yet. Please try again later."
   | _ => throwUnsupportedSyntax
