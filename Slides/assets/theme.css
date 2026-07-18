@@ -1,0 +1,431 @@
+/**
+ * "Aftermath" — an original theme for the LeanAide slide deck.
+ *
+ * A spacious dark theme in the "Project QED" visual language: bold rounded
+ * Poppins display type, Inter for body text, JetBrains Mono for code, and a
+ * cyan → blue → violet accent gradient used for emphasis, cards, and charts.
+ * Built as a full replacement for a bundled reveal.js theme (see VersoSlides'
+ * `Theme.custom`), so this file owns everything a theme like `black.css`
+ * would otherwise own.
+ */
+
+/* ---- Embedded fonts (bundled as theme assets, no network required) ---- */
+
+@font-face {
+  font-family: "Poppins";
+  src: url("fonts/PoppinsSemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Poppins";
+  src: url("fonts/PoppinsBold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Poppins";
+  src: url("fonts/PoppinsExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/Inter.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMono.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*********************************************
+ * GLOBAL STYLES
+ *********************************************/
+:root {
+  --r-background-color: #090c14;
+  --r-main-font: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --r-main-font-size: 28px;
+  --r-main-color: #aab2c5;
+  --r-block-margin: 14px;
+  --r-heading-margin: 0 0 0.3em 0;
+  --r-heading-font: "Poppins", "Inter", ui-sans-serif, sans-serif;
+  --r-heading-color: #f5f7fb;
+  --r-heading-line-height: 1.15;
+  --r-heading-letter-spacing: -0.01em;
+  --r-heading-text-transform: none;
+  --r-heading-text-shadow: none;
+  --r-heading-font-weight: 700;
+  --r-heading1-text-shadow: none;
+  --r-heading1-size: 2.1em;
+  --r-heading2-size: 1.35em;
+  --r-heading3-size: 1.1em;
+  --r-heading4-size: 1em;
+  --r-code-font: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  --r-link-color: #38bdf8;
+  --r-link-color-dark: #0ea5e9;
+  --r-link-color-hover: #7dd3fc;
+  --r-selection-background-color: rgba(139, 92, 246, 0.35);
+  --r-selection-color: #ffffff;
+  --r-overlay-element-bg-color: 15, 18, 28;
+  --r-overlay-element-fg-color: 230, 233, 245;
+
+  /* Extra tokens used by this theme only (see overrides.css too). */
+  --cyan: #22d3ee;
+  --blue: #3b82f6;
+  --violet: #8b5cf6;
+  --gradient: linear-gradient(90deg, var(--cyan) 0%, var(--blue) 55%, var(--violet) 100%);
+  --muted: #8a93a8;
+  --card-bg: rgba(255, 255, 255, 0.035);
+  --card-border: rgba(148, 163, 184, 0.16);
+  --panel-border: rgba(148, 163, 184, 0.16);
+}
+
+.reveal-viewport {
+  background: #090c14;
+  background-color: var(--r-background-color);
+  background-image:
+    radial-gradient(ellipse 65% 50% at 12% -8%, rgba(139, 92, 246, 0.14), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 108%, rgba(34, 211, 238, 0.10), transparent 60%);
+}
+
+.reveal {
+  font-family: var(--r-main-font);
+  font-size: var(--r-main-font-size);
+  font-weight: 400;
+  color: var(--r-main-color);
+}
+
+.reveal ::selection {
+  color: var(--r-selection-color);
+  background: var(--r-selection-background-color);
+  text-shadow: none;
+}
+
+.reveal ::-moz-selection {
+  color: var(--r-selection-color);
+  background: var(--r-selection-background-color);
+  text-shadow: none;
+}
+
+.reveal .slides section,
+.reveal .slides section > section {
+  line-height: 1.35;
+  font-weight: inherit;
+}
+
+/*********************************************
+ * HEADERS
+ *********************************************/
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4,
+.reveal h5,
+.reveal h6 {
+  margin: var(--r-heading-margin);
+  color: var(--r-heading-color);
+  font-family: var(--r-heading-font);
+  font-weight: var(--r-heading-font-weight);
+  line-height: var(--r-heading-line-height);
+  letter-spacing: var(--r-heading-letter-spacing);
+  text-transform: var(--r-heading-text-transform);
+  text-shadow: var(--r-heading-text-shadow);
+  word-wrap: break-word;
+}
+
+/* NOTE: VersoSlides renders each `#` slide title as an <h2> and each `##`
+   vertical-sub-slide title as an <h3> (the document's own <h1> lives
+   outside individual slides) — so "slide title" styling below targets
+   h2, and "sub-slide title" styling targets h3, not h1/h2. */
+.reveal h1 { font-size: 2.6em; font-weight: 800; }
+.reveal h2 { font-size: var(--r-heading1-size); font-weight: 800; }
+.reveal h3 { font-size: var(--r-heading2-size); font-weight: 700; }
+.reveal h4 { font-size: var(--r-heading3-size); font-weight: 600; }
+
+/* Inline gradient-text treatment: wrap the emphasized word(s) of a heading
+   with {class "grad"}[...] to get the signature cyan -> blue -> violet
+   sweep used throughout this deck. */
+.reveal .grad {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Signature treatment for the deck's opening and closing (bookend) slides. */
+.reveal .slides > section:first-of-type > h2:first-child,
+.reveal .slides > section:last-of-type > h2:first-child {
+  font-size: 2.6em;
+  margin-bottom: 0.25em;
+}
+
+/* A thin centered gradient rule above title/divider-style slides. Centered
+   via transform (not margin:auto) since the heading's box may be
+   shrink-to-fit. */
+.reveal .slides > section:first-of-type > h2:first-child::before,
+.reveal .slides > section:last-of-type > h2:first-child::before {
+  content: "";
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  display: block;
+  width: 3em;
+  height: 3px;
+  margin-bottom: 0.6em;
+  background: var(--gradient);
+  border-radius: 2px;
+}
+
+/* A thin accent rule under every other slide title gives the deck a
+   consistent, quiet signature without adding visual noise or much
+   vertical space. */
+.reveal .slides > section:not(:first-of-type):not(:last-of-type) > h2:first-child:not(:only-child)::after,
+.reveal .slides > section > section > h2:first-child:not(:only-child)::after,
+.reveal .slides > section > section > h3:first-child:not(:only-child)::after {
+  content: "";
+  display: block;
+  width: 2.2em;
+  height: 3px;
+  margin-top: 0.2em;
+  background: var(--gradient);
+  border-radius: 2px;
+}
+
+/*********************************************
+ * OTHER
+ *********************************************/
+.reveal p {
+  margin: var(--r-block-margin) 0;
+  line-height: 1.35;
+}
+
+.reveal h1:last-child,
+.reveal h2:last-child,
+.reveal h3:last-child,
+.reveal h4:last-child,
+.reveal h5:last-child,
+.reveal h6:last-child {
+  margin-bottom: 0;
+}
+
+.reveal img,
+.reveal video,
+.reveal iframe {
+  max-width: 95%;
+  max-height: 95%;
+}
+
+.reveal strong,
+.reveal b {
+  font-weight: 700;
+  color: var(--r-heading-color);
+}
+
+.reveal em {
+  font-style: italic;
+  color: inherit;
+}
+
+.reveal ol,
+.reveal dl,
+.reveal ul {
+  display: inline-block;
+  text-align: left;
+  margin: 0.2em 0 0.2em 1em;
+}
+
+.reveal ol { list-style-type: decimal; }
+.reveal ul { list-style-type: "– "; }
+.reveal ul ul { list-style-type: "· "; }
+.reveal ul ul ul { list-style-type: circle; }
+
+.reveal li {
+  margin: 0.2em 0;
+  padding-left: 0.15em;
+}
+.reveal li::marker {
+  color: var(--cyan);
+}
+
+.reveal ul ul,
+.reveal ul ol,
+.reveal ol ol,
+.reveal ol ul {
+  display: block;
+  margin-left: 40px;
+}
+
+.reveal dt { font-weight: bold; }
+.reveal dd { margin-left: 40px; }
+
+.reveal blockquote {
+  display: block;
+  position: relative;
+  width: 78%;
+  margin: var(--r-block-margin) auto;
+  padding: 0.5em 0.9em;
+  font-style: italic;
+  border-left: 3px solid var(--cyan);
+  background: var(--card-bg);
+  box-shadow: none;
+  border-radius: 0 8px 8px 0;
+}
+
+.reveal blockquote p:first-child,
+.reveal blockquote p:last-child {
+  display: inline-block;
+}
+
+.reveal q { font-style: italic; }
+
+.reveal pre {
+  display: block;
+  position: relative;
+  width: 90%;
+  margin: var(--r-block-margin) auto;
+  text-align: left;
+  font-size: 0.55em;
+  font-family: var(--r-code-font);
+  line-height: 1.5em;
+  word-wrap: break-word;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.4);
+}
+
+.reveal code {
+  font-family: var(--r-code-font);
+  text-transform: none;
+  tab-size: 2;
+}
+
+.reveal pre code {
+  display: block;
+  padding: 5px;
+  overflow: auto;
+  max-height: 400px;
+  word-wrap: normal;
+}
+
+.reveal .code-wrapper { white-space: normal; }
+.reveal .code-wrapper code { white-space: pre; }
+
+.reveal table {
+  margin: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.reveal table th { font-weight: 700; font-family: "Poppins", sans-serif; }
+
+.reveal table th,
+.reveal table td {
+  text-align: left;
+  padding: 0.3em 0.6em;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.reveal table th[align=center], .reveal table td[align=center] { text-align: center; }
+.reveal table th[align=right], .reveal table td[align=right] { text-align: right; }
+
+.reveal table tbody tr:last-child th,
+.reveal table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.reveal sup { vertical-align: super; font-size: smaller; }
+.reveal sub { vertical-align: sub; font-size: smaller; }
+
+.reveal small {
+  display: inline-block;
+  font-size: 0.6em;
+  line-height: 1.2em;
+  vertical-align: top;
+  color: var(--muted);
+}
+.reveal small * { vertical-align: top; }
+
+.reveal img { margin: var(--r-block-margin) 0; border-radius: 8px; }
+
+/*********************************************
+ * LINKS
+ *********************************************/
+.reveal a {
+  color: var(--r-link-color);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.35);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.reveal a:hover {
+  color: var(--r-link-color-hover);
+  border-color: var(--r-link-color-hover);
+  text-shadow: none;
+}
+
+/* Pill-shaped CTA treatment: wrap a link's text with {class "pill"}[...]
+   for the rounded, card-like button used on the closing slide. */
+.reveal a.pill,
+.reveal .pill a {
+  display: inline-block;
+}
+.reveal .pill {
+  display: inline-block;
+  padding: 0.5em 1.1em;
+  border-radius: 999px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+.reveal .pill a {
+  border-bottom: none;
+  color: var(--r-heading-color);
+}
+
+.reveal .roll span:after {
+  color: #fff;
+  background: var(--r-link-color-dark);
+}
+
+/*********************************************
+ * Frame helper
+ *********************************************/
+.reveal .r-frame {
+  border: 4px solid var(--r-main-color);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+}
+.reveal a .r-frame { transition: all 0.15s linear; }
+.reveal a:hover .r-frame {
+  border-color: var(--r-link-color);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.55);
+}
+
+/*********************************************
+ * NAVIGATION / PROGRESS
+ *********************************************/
+.reveal .controls { color: var(--cyan); }
+.reveal .progress {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--violet);
+}
+
+/* Speaker/aside text used across the deck (parentheticals styled as quiet
+   asides rather than full-weight body text). */
+.reveal .slides section > p > em:only-child {
+  color: var(--muted);
+}
+
+/*********************************************
+ * PRINT
+ *********************************************/
+@media print {
+  .backgrounds { background-color: var(--r-background-color); }
+}

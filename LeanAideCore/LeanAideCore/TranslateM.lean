@@ -312,12 +312,10 @@ def runCommand (cmd: Syntax.Command) : TranslateM Unit := do
 def addCommand (cmd: Syntax.Command) : TranslateM Unit := do
   modify fun s  => {s with cmdPrelude := s.cmdPrelude.push cmd}
 
-def addCommands (cmds: TSyntax ``commandSeq) : TranslateM Unit := do
-  let cmds := getCommands cmds
-  for cmd in cmds do
-    discard <| runFrontendM (← ppCommand cmd).pretty true
-  modify fun s => {s with cmdPrelude := s.cmdPrelude ++ cmds}
-
+/-- Appends the given commands to the translation's `outputFile`, if one is
+configured (see `Translate.State.outputFile`), so partial/live progress can
+be observed on disk while a long-running generation is still in flight.
+A no-op when no `outputFile` is set. -/
 def writeCommands  (cmds : TSyntax ``commandSeq) : TranslateM Unit := do
   match (← get).outputFile with
   | none => return
@@ -329,6 +327,13 @@ def writeCommands  (cmds : TSyntax ``commandSeq) : TranslateM Unit := do
       let cmdStr := (← ppCommand cmd).pretty
       lines := lines.push cmdStr
     IO.FS.writeFile file <| contents ++ (lines.foldr (· ++ "\n" ++ · ) "")
+
+def addCommands (cmds: TSyntax ``commandSeq) : TranslateM Unit := do
+  let cmdArray := getCommands cmds
+  for cmd in cmdArray do
+    discard <| runFrontendM (← ppCommand cmd).pretty true
+  modify fun s => {s with cmdPrelude := s.cmdPrelude ++ cmdArray}
+  writeCommands cmds
 
 def registerDefnEnv (dfn: DefData) : TranslateM Unit := do
   runCommand <| ← dfn.statementStx

@@ -1,0 +1,66 @@
+/**
+ * Targeted overrides layered on top of `theme.css`.
+ *
+ * These specifically adjust VersoSlides component stylesheets
+ * (slides-highlight.css / panel.css / table.css), which load *after*
+ * `extraCss` in the document head — hence the `!important`s below, used
+ * the same way the upstream stylesheets use them for their own overrides.
+ */
+
+/* Give Lean/code boxes a card surface (bg + outline) matching the deck's
+   card language, without losing the library's shadow-box proportions. */
+.reveal code.hl.lean.block,
+.reveal pre:not(.code-with-panel pre) {
+  background: var(--card-bg, rgba(255, 255, 255, 0.035)) !important;
+  border: 1px solid var(--card-border, rgba(148, 163, 184, 0.16)) !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.4) !important;
+}
+
+.code-with-panel > code.hl.lean.block {
+  background: var(--card-bg, rgba(255, 255, 255, 0.035)) !important;
+  border: 1px solid var(--card-border, rgba(148, 163, 184, 0.16)) !important;
+  border-right: none !important;
+}
+
+.panel-cell {
+  background: var(--card-bg, rgba(255, 255, 255, 0.035)) !important;
+  border: 1px solid var(--card-border, rgba(148, 163, 184, 0.16)) !important;
+  border-left: none !important;
+}
+
+.panel-divider {
+  background: rgba(34, 211, 238, 0.3) !important;
+}
+.panel-divider:hover,
+.panel-divider:active {
+  background: rgba(34, 211, 238, 0.6) !important;
+}
+
+/* Tint the comparison table's stripes and separators toward the accent
+   instead of plain gray, wrap it in a card surface, and give it a touch
+   more breathing room. */
+table.slide-table {
+  --slide-table-stripe-row-a: rgba(139, 92, 246, 0.10) !important;
+  --slide-table-stripe-col-a: rgba(34, 211, 238, 0.08) !important;
+  --slide-table-sep: 1px solid rgba(148, 163, 184, 0.2) !important;
+  --slide-table-header-sep: 2px solid rgba(34, 211, 238, 0.55) !important;
+  --slide-table-border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  --slide-table-cell-padding: 0.4em 0.7em !important;
+  font-size: 0.75em;
+  background: var(--card-bg, rgba(255, 255, 255, 0.035));
+  border: 1px solid var(--card-border, rgba(148, 163, 184, 0.16));
+  border-radius: 14px;
+  overflow: hidden;
+}
+table.slide-table thead th {
+  color: var(--cyan, #22d3ee);
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+
+/* Speaker-note affordance and small utility used on a couple of slides. */
+.reveal .slides section .r-fit-text {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  color: var(--violet, #8b5cf6);
+}

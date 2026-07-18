@@ -135,7 +135,10 @@ def runCodegen (inputPath : System.FilePath) : IO UInt32 := do
       maxHeartbeats := 0
       maxRecDepth := 1000000 }
   let translator : Translator := {}
-  let core := leanFromStructuredJsonTask (taskJson js) translator |>.runToCore (outputFile? := some (outputPathFor inputPath))
+  let liveFile := liveOutputPathFor inputPath
+  IO.FS.createDirAll (System.mkFilePath ["CodeGen", "Live"])
+  IO.println s!"Writing partial output to {liveFile} as generation proceeds..."
+  let core := leanFromStructuredJsonTask (taskJson js) translator |>.runToCore (outputFile? := some liveFile)
   let result ← core.run' ctx {env := env} |>.runToIO'
   match result.getObjValAs? String "result" with
   | Except.ok "success" =>
