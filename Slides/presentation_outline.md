@@ -1,0 +1,11 @@
+- The presentation must start with what Autoformalisation is.
+- Then, we introduce LeanAide as an Autoformalisation agent.
+- One sentence definition of LeanAide should be given with a promise of breakingdown various parts of the definition through the talk.
+- An interesting way to present various aspects of the LeanAide would beas follows: 
+        - Pick one or two quintessential examples from LeanAideExamples repository
+        - Use these examples throughout the presentation.
+        - Explain various stages of translation in LeanAide using these representations.
+- The key idea of LeanAide - combinator Code generation- should be explained thoroughly in one slide.
+- The agentic system behind the generation of JSON need not be explained in detail. A brief overview would be enough. 
+- The client-server system architecture need not be explained. The focus should be on how to set it up. Read through the code (NOT README) and make a proper "How-to" Slide on this.
+- Make few points on what are the aspects in which LeanAide stands out with respect to other autoformalisation agents.
