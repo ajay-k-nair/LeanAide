@@ -1,0 +1,113 @@
+{
+  "document": {
+    "type": "document",
+    "body": [
+      {
+        "type": "Definition",
+        "label": "def:cocountable_topology",
+        "header": "Definition",
+        "name": "co-countable",
+        "definition": "The co-countable topology on a set X is defined such that a subset U of X is open if and only if U = ∅ or X \\ U is countable."
+      },
+      {
+        "type": "Theorem",
+        "label": "thm:cocountable_sequences",
+        "header": "Theorem",
+        "hypothesis": [
+          {
+            "type": "assume_statement",
+            "assumption": "Let X be an uncountable set equipped with the co-countable topology."
+          },
+          {
+            "type": "assume_statement",
+            "assumption": "Let (x_n)_{n\\in\\mathbb{N}} be a sequence in X and let L \\in X."
+          }
+        ],
+        "claim": "A sequence (x_n) in X converges to a point L \\in X if and only if the sequence is eventually constant with value L, i.e., there exists an integer N such that for all n \\ge N, x_n = L.",
+        "proof": [
+          {
+            "type": "Paragraph",
+            "text": "We prove that a sequence (x_n) in an uncountable set X with the co-countable topology converges to L if and only if it is eventually constant with value L."
+          },
+          {
+            "type": "Section",
+            "label": "sec:forward_implication",
+            "level": 2,
+            "header": "If the sequence converges, then it is eventually constant",
+            "content": [
+              {
+                "type": "assume_statement",
+                "assumption": "Assume that the sequence (x_n) converges to L in the co-countable topology."
+              },
+              {
+                "type": "let_statement",
+                "variable_name": "A",
+                "statement": "Let A := { x_n \\mid n \\in \\mathbb{N},\\ x_n \\neq L } \\subseteq X be the set of all values taken by the sequence which are different from L.",
+                "properties": "subset of X consisting of all values of the sequence different from L"
+              },
+              {
+                "type": "assert_statement",
+                "claim": "The set A is countable.",
+                "proof_method": "Since the sequence (x_n) is indexed by \\mathbb{N}, the image set {x_n \\mid n \\in \\mathbb{N}} is at most countable, and A is a subset of this image set."
+              },
+              {
+                "type": "let_statement",
+                "variable_name": "U",
+                "statement": "Let U := X \\setminus A.",
+                "properties": "subset of X"
+              },
+              {
+                "type": "assert_statement",
+                "claim": "The set U is open in the co-countable topology and L \\in U.",
+                "proof_method": "Since A is countable, X \\setminus A is open by the definition of the co-countable topology. Also, by construction A consists only of points different from L, so L \\notin A and hence L \\in U."
+              },
+              {
+                "type": "assert_statement",
+                "claim": "There exists N \\in \\mathbb{N} such that for all n \\ge N, x_n \\in U.",
+                "proof_method": "This follows from the definition of convergence of (x_n) to L, applied to the open set U containing L."
+              },
+              {
+                "type": "assert_statement",
+                "claim": "For all n \\ge N, we have x_n = L.",
+                "proof_method": "For n \\ge N, x_n \\in U = X \\setminus A, so x_n \\notin A. By definition of A, the elements of A are exactly those x_n that are different from L, hence x_n \\notin A implies x_n = L."
+              },
+              {
+                "type": "conclude_statement",
+                "claim": "If (x_n) converges to L, then (x_n) is eventually constant with value L."
+              }
+            ]
+          },
+          {
+            "type": "Section",
+            "label": "sec:reverse_implication",
+            "level": 2,
+            "header": "If the sequence is eventually constant, then it converges",
+            "content": [
+              {
+                "type": "assume_statement",
+                "assumption": "Assume that the sequence (x_n) is eventually constant with value L, i.e., there exists N \\in \\mathbb{N} such that for all n \\ge N, x_n = L."
+              },
+              {
+                "type": "assume_statement",
+                "assumption": "Let U \\subseteq X be any open set such that L \\in U."
+              },
+              {
+                "type": "assert_statement",
+                "claim": "There exists M \\in \\mathbb{N} such that for all n \\ge M, x_n \\in U.",
+                "proof_method": "By eventual constancy, for all n \\ge N we have x_n = L. Since L \\in U, it follows that for all n \\ge N, x_n \\in U, so we may take M = N."
+              },
+              {
+                "type": "conclude_statement",
+                "claim": "The sequence (x_n) converges to L in the co-countable topology."
+              }
+            ]
+          },
+          {
+            "type": "conclude_statement",
+            "claim": "Combining both directions, the sequence (x_n) converges to L if and only if it is eventually constant with value L."
+          }
+        ]
+      }
+    ]
+  }
+}
